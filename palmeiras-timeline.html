@@ -494,8 +494,7 @@
       <div class="carta-atual" id="cartaAtual">
         <div class="ano-oculto">❓</div>
         <span class="badge-categoria" id="cartaBadge"></span>
-        <h2 id="cartaTitulo">Carregando...</h2>
-        <p id="cartaDesc"></p>
+        <p id="cartaDesc">Carregando...</p>
       </div>
 
       <div class="feedback" id="feedback"></div>
@@ -566,9 +565,13 @@
       { ano: 2023, categoria: 'artilheiros', titulo: 'Artilheiro em ascensão', desc: 'Aos 17 anos, o atacante Endrick termina a temporada como artilheiro do clube no Campeonato Brasileiro, com 8 gols em 25 jogos disputados.' },
 
       // ---------- ESCALAÇÕES ----------
-      { ano: 1999, categoria: 'escalacao', titulo: 'Escalação campeã (ida da final)', desc: 'Nesta partida decisiva, o Palmeiras entrou em campo com: Marcos; Arce, Júnior Baiano, Roque Júnior e Júnior; César Sampaio, Rogério, Alex e Zinho; Paulo Nunes e Oséas, sob o comando de Luiz Felipe Scolari.' },
-      { ano: 2020, categoria: 'escalacao', titulo: 'Escalação campeã (Maracanã)', desc: 'Na decisão contra o Santos, o time foi a campo com: Weverton; Marcos Rocha, Luan, Gustavo Gómez e Matías Viña; Gabriel Menino, Raphael Veiga, Zé Rafael e Danilo; Luiz Adriano e Rony, sob o comando de Abel Ferreira.' },
-      { ano: 2021, categoria: 'escalacao', titulo: 'Escalação campeã (Montevidéu)', desc: 'Na final contra o Flamengo, o Palmeiras escalou: Weverton, Mayke, Gustavo Gómez, Luan e Piquerez; Danilo, Zé Rafael, Gustavo Scarpa e Raphael Veiga; Dudu e Rony, sob o comando de Abel Ferreira.' }
+      { ano: 1998, categoria: 'escalacao', titulo: 'Escalação titular', desc: 'O Palmeiras entrou em campo com: Velloso; Neném, Roque Júnior, Cléber e Júnior; Galeano, Rogério, Alex e Zinho; Paulo Nunes e Oséas, sob o comando de Luiz Felipe Scolari.' },
+      { ano: 1999, categoria: 'escalacao', titulo: 'Escalação titular', desc: 'O Palmeiras entrou em campo com: Marcos; Arce, Júnior Baiano, Roque Júnior e Júnior; César Sampaio, Rogério, Alex e Zinho; Paulo Nunes e Oséas, sob o comando de Luiz Felipe Scolari.' },
+      { ano: 2012, categoria: 'escalacao', titulo: 'Escalação titular', desc: 'O Palmeiras entrou em campo com: Bruno; Artur, Maurício Ramos, Thiago Heleno e Juninho; Henrique, Marcos Assunção, João Vitor e Daniel Carvalho; Mazinho e Betinho, sob o comando de Luiz Felipe Scolari.' },
+      { ano: 2015, categoria: 'escalacao', titulo: 'Escalação titular', desc: 'O Palmeiras entrou em campo com: Fernando Prass; João Pedro, Jackson, Vitor Hugo e Zé Roberto; Matheus Sales, Arouca, Dudu, Robinho e Gabriel Jesus; Barrios, sob o comando de Marcelo Oliveira.' },
+      { ano: 2020, categoria: 'escalacao', titulo: 'Escalação titular', desc: 'O Palmeiras entrou em campo com: Weverton; Marcos Rocha, Luan, Gustavo Gómez e Viña; Felipe Melo, Zé Rafael e Raphael Veiga; Rony, Wesley e Luiz Adriano, sob o comando de Abel Ferreira.' },
+      { ano: 2020, categoria: 'escalacao', titulo: 'Escalação titular', desc: 'O Palmeiras entrou em campo com: Weverton; Marcos Rocha, Luan, Gustavo Gómez e Matías Viña; Gabriel Menino, Raphael Veiga, Zé Rafael e Danilo; Luiz Adriano e Rony, sob o comando de Abel Ferreira.' },
+      { ano: 2021, categoria: 'escalacao', titulo: 'Escalação titular', desc: 'O Palmeiras entrou em campo com: Weverton, Mayke, Gustavo Gómez, Luan e Piquerez; Danilo, Zé Rafael, Gustavo Scarpa e Raphael Veiga; Dudu e Rony, sob o comando de Abel Ferreira.' }
     ];
 
     const CATEGORIAS = {
@@ -606,7 +609,6 @@
     const elProgresso = document.getElementById('progresso');
     const elModosAtivos = document.getElementById('modosAtivos');
     const elCartaBadge = document.getElementById('cartaBadge');
-    const elCartaTitulo = document.getElementById('cartaTitulo');
     const elCartaDesc = document.getElementById('cartaDesc');
     const elFeedback = document.getElementById('feedback');
     const elLinhaTempo = document.getElementById('linhaTempo');
@@ -799,11 +801,11 @@
 
       if (acertou) {
         acertos++;
-        elFeedback.textContent = `✅ Certo! "${cartaAtual.titulo}" é de ${cartaAtual.ano}.`;
+        elFeedback.textContent = `✅ Certo! Esse fato é de ${cartaAtual.ano}.`;
         elFeedback.className = 'feedback acerto';
       } else {
         vidas--;
-        elFeedback.textContent = `❌ Não foi dessa vez. "${cartaAtual.titulo}" é de ${cartaAtual.ano}.`;
+        elFeedback.textContent = `❌ Não foi dessa vez. Esse fato é de ${cartaAtual.ano}.`;
         elFeedback.className = 'feedback erro';
       }
 
@@ -860,16 +862,13 @@
 
       if (cartaAtual) {
         elCartaBadge.textContent = `${CATEGORIAS[cartaAtual.categoria].emoji} ${CATEGORIAS[cartaAtual.categoria].label}`;
-        elCartaTitulo.textContent = cartaAtual.titulo;
         elCartaDesc.textContent = cartaAtual.desc;
       } else if (aguardando) {
         elCartaBadge.textContent = '';
-        elCartaTitulo.textContent = 'Registrando na linha do tempo...';
-        elCartaDesc.textContent = '';
+        elCartaDesc.textContent = 'Registrando na linha do tempo...';
       } else {
         elCartaBadge.textContent = '';
-        elCartaTitulo.textContent = '—';
-        elCartaDesc.textContent = '';
+        elCartaDesc.textContent = '—';
       }
 
       elLinhaTempo.innerHTML = '';
@@ -892,7 +891,7 @@
           if (ultimaInsercao && ultimaInsercao.indice === i) {
             cartaEl.classList.add(ultimaInsercao.correta ? 'destaque-acerto' : 'destaque-erro');
           }
-          cartaEl.innerHTML = `<div class="emoji-cat">${CATEGORIAS[evento.categoria].emoji}</div><div class="ano">${evento.ano}</div><div class="titulo">${evento.titulo}</div>`;
+          cartaEl.innerHTML = `<div class="emoji-cat">${CATEGORIAS[evento.categoria].emoji}</div><div class="ano">${evento.ano}</div>`;
           elLinhaTempo.appendChild(cartaEl);
         }
       }
