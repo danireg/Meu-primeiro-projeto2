@@ -47,6 +47,10 @@
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
   }
 
+  .painel[hidden] {
+    display: none;
+  }
+
   .como-jogar {
     background: #eafbf1;
     border: 1px solid #bfe9d0;
@@ -58,13 +62,128 @@
     line-height: 1.5;
   }
 
+  /* --- Tela de configuração de modos --- */
+
+  .modos-titulo {
+    margin: 0 0 4px;
+    font-size: 1.1rem;
+    color: #0a6c34;
+  }
+
+  .modos-subtitulo {
+    margin: 0 0 16px;
+    font-size: 0.88rem;
+    color: #666;
+  }
+
+  .lista-modos {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .opcao-modo {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    border: 2px solid #e2e2e2;
+    border-radius: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .opcao-modo:has(input:checked) {
+    border-color: #0a6c34;
+    background: #eafbf1;
+  }
+
+  .opcao-modo input {
+    margin-top: 3px;
+    width: 18px;
+    height: 18px;
+    accent-color: #0a6c34;
+    flex-shrink: 0;
+  }
+
+  .opcao-modo .emoji-modo {
+    font-size: 1.3rem;
+  }
+
+  .opcao-modo strong {
+    display: block;
+    font-size: 0.95rem;
+    color: #222;
+  }
+
+  .opcao-modo span.desc-modo {
+    display: block;
+    font-size: 0.8rem;
+    color: #777;
+    margin-top: 2px;
+  }
+
+  .contador-modo {
+    font-size: 0.75rem;
+    color: #0a6c34;
+    font-weight: 700;
+    white-space: nowrap;
+    margin-left: auto;
+    padding-left: 8px;
+  }
+
+  .acoes-modo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 6px;
+  }
+
+  #alternarTodos {
+    background: none;
+    border: none;
+    color: #0a6c34;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+  }
+
+  #comecarJogo {
+    border: none;
+    border-radius: 10px;
+    padding: 12px 26px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: #0a6c34;
+    color: #fff;
+  }
+
+  #comecarJogo:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .aviso-modo {
+    font-size: 0.82rem;
+    color: #c0392b;
+    min-height: 18px;
+    margin-top: 6px;
+  }
+
+  /* --- Jogo --- */
+
   .status {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    margin-bottom: 18px;
+    margin-bottom: 6px;
   }
 
   .vidas {
@@ -78,6 +197,12 @@
     font-weight: 600;
   }
 
+  .modos-ativos {
+    font-size: 0.78rem;
+    color: #888;
+    margin-bottom: 16px;
+  }
+
   .carta-atual {
     background: linear-gradient(135deg, #0f8f45, #0a6c34);
     color: #fff;
@@ -85,7 +210,7 @@
     padding: 22px;
     text-align: center;
     margin-bottom: 26px;
-    min-height: 140px;
+    min-height: 150px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -100,6 +225,17 @@
     opacity: 0.85;
   }
 
+  .badge-categoria {
+    display: inline-block;
+    background: rgba(255,255,255,0.18);
+    border-radius: 999px;
+    padding: 3px 12px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
   .carta-atual h2 {
     margin: 0;
     font-size: 1.15rem;
@@ -109,7 +245,7 @@
     margin: 0;
     font-size: 0.92rem;
     line-height: 1.4;
-    max-width: 480px;
+    max-width: 520px;
   }
 
   .feedback {
@@ -145,6 +281,10 @@
     padding: 10px 8px;
     text-align: center;
     box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+  }
+
+  .carta-tempo .emoji-cat {
+    font-size: 0.85rem;
   }
 
   .carta-tempo .ano {
@@ -210,9 +350,11 @@
   .rodape-controles {
     display: flex;
     justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
   }
 
-  #reiniciar {
+  #reiniciar, #mudarModos {
     border: none;
     border-radius: 10px;
     padding: 10px 22px;
@@ -224,7 +366,7 @@
     transition: transform 0.15s ease;
   }
 
-  #reiniciar:active {
+  #reiniciar:active, #mudarModos:active {
     transform: scale(0.96);
   }
 
@@ -292,7 +434,22 @@
       <p>Encaixe os fatos da história do Verdão na ordem cronológica certa!</p>
     </header>
 
-    <div class="painel">
+    <!-- Tela de configuração de modos -->
+    <div class="painel" id="painelSetup">
+      <h2 class="modos-titulo">Escolha os modos de jogo</h2>
+      <p class="modos-subtitulo">Selecione um ou mais temas. Marque todos para jogar com tudo misturado.</p>
+
+      <div class="lista-modos" id="listaModos"></div>
+
+      <div class="acoes-modo">
+        <button id="alternarTodos" type="button">Desmarcar todos</button>
+        <button id="comecarJogo" type="button">Começar jogo</button>
+      </div>
+      <p class="aviso-modo" id="avisoModo"></p>
+    </div>
+
+    <!-- Painel do jogo -->
+    <div class="painel" id="painelJogo" hidden>
       <div class="como-jogar">
         Cada carta traz um fato da história do clube, sem revelar o ano. Clique no
         espaço (⊕) da linha do tempo onde você acha que esse fato deve entrar. Acertando,
@@ -304,9 +461,11 @@
         <div class="vidas" id="vidas" aria-label="Vidas restantes"></div>
         <div class="progresso" id="progresso"></div>
       </div>
+      <div class="modos-ativos" id="modosAtivos"></div>
 
       <div class="carta-atual" id="cartaAtual">
         <div class="ano-oculto">❓</div>
+        <span class="badge-categoria" id="cartaBadge"></span>
         <h2 id="cartaTitulo">Carregando...</h2>
         <p id="cartaDesc"></p>
       </div>
@@ -318,7 +477,8 @@
       </div>
 
       <div class="rodape-controles">
-        <button id="reiniciar">Reiniciar jogo</button>
+        <button id="reiniciar" type="button">Reiniciar (mesmos modos)</button>
+        <button id="mudarModos" type="button">Mudar modos</button>
       </div>
     </div>
   </div>
@@ -327,38 +487,70 @@
     <div class="caixa-fim" id="caixaFim">
       <h2 id="fimTitulo"></h2>
       <p id="fimTexto"></p>
-      <button id="jogarNovamente">Jogar novamente</button>
+      <button id="jogarNovamente" type="button">Jogar novamente</button>
     </div>
   </div>
 
   <script>
+    // categoria: 'titulos' | 'historico' | 'estadio' | 'artilheiros' | 'escalacao'
     const EVENTOS = [
-      { ano: 1914, titulo: "Fundação do clube", desc: "Um grupo de imigrantes e descendentes de italianos funda, em São Paulo, o clube que mais tarde se tornaria o Palmeiras: o Palestra Itália." },
-      { ano: 1920, titulo: "Primeiro título paulista", desc: "O time conquista pela primeira vez o Campeonato Paulista, vencendo o Paulistano na decisão." },
-      { ano: 1942, titulo: "Nasce o nome Palmeiras", desc: "Por pressão do governo brasileiro durante a Segunda Guerra Mundial, o clube deixa o nome Palestra Itália e passa a se chamar Sociedade Esportiva Palmeiras." },
-      { ano: 1951, titulo: "Campeão do mundo", desc: "O clube vence a Copa Rio, torneio disputado no Brasil com equipes de vários continentes, celebrado por muitos torcedores como um título mundial." },
-      { ano: 1960, titulo: "Estreia como campeão brasileiro", desc: "O clube conquista pela primeira vez o Campeonato Brasileiro." },
-      { ano: 1967, titulo: "Bicampeão nacional", desc: "O time vence a Taça Brasil, um dos torneios que deram origem ao atual Campeonato Brasileiro." },
-      { ano: 1969, titulo: "Mais um título nacional", desc: "O clube volta a ser campeão brasileiro, mantendo a força de sua geração de craques." },
-      { ano: 1973, titulo: "Título da 'Academia'", desc: "Formado majoritariamente por jogadores da base, o time conhecido como 'Academia de Futebol' conquista o Campeonato Brasileiro." },
-      { ano: 1993, titulo: "Volta ao topo do país", desc: "Depois de quase duas décadas, o clube volta a ser campeão brasileiro, em uma temporada de forte investimento de um patrocinador." },
-      { ano: 1994, titulo: "Bicampeonato seguido", desc: "O Palmeiras conquista o Campeonato Brasileiro pela segunda vez consecutiva, revalidando o título do ano anterior." },
-      { ano: 1998, titulo: "Estreia na Copa do Brasil", desc: "O clube conquista pela primeira vez a Copa do Brasil, vencendo o Cruzeiro na final." },
-      { ano: 1999, titulo: "Primeira Libertadores", desc: "Comandado por Luiz Felipe Scolari, o Palmeiras conquista pela primeira vez a Copa Libertadores da América." },
-      { ano: 2012, titulo: "Segunda Copa do Brasil", desc: "O time volta a levantar a taça da Copa do Brasil, dessa vez sob o comando de Gilson Kleina." },
-      { ano: 2014, titulo: "Casa nova", desc: "É inaugurado o estádio construído no terreno do antigo Palestra Itália, que se torna a nova casa do clube." },
-      { ano: 2015, titulo: "Terceira Copa do Brasil", desc: "O clube conquista mais uma edição da Copa do Brasil, já jogando em sua nova arena." },
-      { ano: 2016, titulo: "Campeão na casa nova", desc: "O Palmeiras é campeão brasileiro pela primeira vez atuando em seu novo estádio." },
-      { ano: 2018, titulo: "Mais um Brasileiro", desc: "O time conquista outro Campeonato Brasileiro, com Luiz Felipe Scolari novamente no comando." },
-      { ano: 2020, titulo: "Ano de dois títulos", desc: "Sob o comando de Abel Ferreira, o clube conquista, na mesma temporada, a Copa Libertadores da América pela segunda vez e também a Copa do Brasil." },
-      { ano: 2021, titulo: "Tricampeão continental", desc: "Em uma decisão direta contra um rival brasileiro, o Palmeiras conquista sua terceira Copa Libertadores da América." },
-      { ano: 2022, titulo: "Título antecipado", desc: "O clube garante o título do Campeonato Brasileiro com rodadas de antecedência." },
-      { ano: 2023, titulo: "Maior campeão nacional", desc: "Com mais um título do Campeonato Brasileiro, o Palmeiras se isola como o clube com mais conquistas na história da competição." },
-      { ano: 2024, titulo: "Estádio ganha novo nome", desc: "Ao fim do contrato com o antigo patrocinador, a arena do clube passa a ter o nome de uma nova empresa parceira." }
+      // ---------- HISTÓRICO DO CLUBE ----------
+      { ano: 1914, categoria: 'historico', titulo: 'Fundação do clube', desc: 'Um grupo de imigrantes e descendentes de italianos funda, em São Paulo, o clube que mais tarde se tornaria o Palmeiras: o Palestra Itália.' },
+      { ano: 1942, categoria: 'historico', titulo: 'Nasce o nome Palmeiras', desc: 'Por pressão do governo brasileiro durante a Segunda Guerra Mundial, o clube deixa o nome Palestra Itália e passa a se chamar Sociedade Esportiva Palmeiras.' },
+      { ano: 2002, categoria: 'historico', titulo: 'Ano de crise', desc: 'Em uma temporada muito abaixo do esperado, o clube é rebaixado para a Série B do Campeonato Brasileiro.' },
+      { ano: 2003, categoria: 'historico', titulo: 'Volta para a elite', desc: 'Depois de uma temporada na segunda divisão, o Palmeiras conquista o título da Série B e garante o retorno à elite do futebol nacional.' },
+
+      // ---------- ESTÁDIO ----------
+      { ano: 1978, categoria: 'estadio', titulo: 'Recorde de público', desc: 'O clube reúne o maior público pagante da sua história, mais de 120 mil torcedores, em um jogo contra o Santos no Estádio do Morumbi.' },
+      { ano: 2014, categoria: 'estadio', titulo: 'Casa nova', desc: 'É inaugurado o estádio construído no terreno do antigo Palestra Itália, que se torna a nova casa do clube.' },
+      { ano: 2023, categoria: 'estadio', titulo: 'Recorde na casa nova', desc: 'O estádio do clube registra seu maior público em um clássico contra o Corinthians, válido pelo Campeonato Brasileiro.' },
+      { ano: 2024, categoria: 'estadio', titulo: 'Estádio ganha novo nome', desc: 'Após o fim do contrato com o patrocinador anterior, o nome do estádio é trocado por votação entre os torcedores, passando a homenagear uma empresa de serviços financeiros.' },
+
+      // ---------- TÍTULOS ----------
+      { ano: 1920, categoria: 'titulos', titulo: 'Título estadual', desc: 'O time vence o Campeonato Paulista, batendo o Paulistano na decisão.' },
+      { ano: 1951, categoria: 'titulos', titulo: 'Campeão do mundo', desc: 'O clube vence a Copa Rio, torneio disputado no Brasil com equipes de vários continentes, celebrado por muitos torcedores como um título mundial.' },
+      { ano: 1960, categoria: 'titulos', titulo: 'Título nacional', desc: 'O Palmeiras conquista o Campeonato Brasileiro, disputado então em um formato de pontos corridos entre os principais clubes do país.' },
+      { ano: 1967, categoria: 'titulos', titulo: 'Taça Brasil', desc: "O time vence a Taça Brasil, um dos torneios nacionais que, com o tempo, passaram a ser contabilizados como Campeonato Brasileiro." },
+      { ano: 1969, categoria: 'titulos', titulo: 'Geração de ídolos', desc: 'O clube volta a vencer o Campeonato Brasileiro, com Ademir da Guia como um dos principais nomes do elenco.' },
+      { ano: 1972, categoria: 'titulos', titulo: 'Bola de Prata', desc: 'O Palmeiras conquista o Campeonato Brasileiro na mesma temporada em que Ademir da Guia é eleito o melhor jogador da competição.' },
+      { ano: 1973, categoria: 'titulos', titulo: "Título da 'Academia'", desc: "Formado majoritariamente por jogadores da base, o time conhecido como 'Academia de Futebol' conquista o Campeonato Brasileiro." },
+      { ano: 1993, categoria: 'titulos', titulo: 'Era Parmalat', desc: 'O clube volta ao topo do futebol brasileiro em uma temporada de forte investimento do patrocinador Parmalat.' },
+      { ano: 1994, categoria: 'titulos', titulo: 'Revalida o título', desc: 'O Palmeiras revalida o título brasileiro conquistado na temporada anterior, com Rivaldo como um dos destaques do elenco.' },
+      { ano: 1998, categoria: 'titulos', titulo: 'Título contra o Cruzeiro', desc: 'O clube conquista a Copa do Brasil, vencendo o Cruzeiro na final.' },
+      { ano: 1999, categoria: 'titulos', titulo: 'Glória em Cali', desc: 'Comandado por Luiz Felipe Scolari, o Palmeiras conquista a Copa Libertadores da América, batendo o Deportivo Cali nos pênaltis após 2 a 2 no placar agregado.' },
+      { ano: 2012, categoria: 'titulos', titulo: 'Título contra o Coritiba', desc: 'Sob o comando de Luiz Felipe Scolari, o clube conquista a Copa do Brasil diante do Coritiba, com gols decisivos de Jorge Valdivia e Thiago Heleno na partida de ida.' },
+      { ano: 2015, categoria: 'titulos', titulo: 'Título contra o Santos', desc: 'O Palmeiras conquista a Copa do Brasil diante do Santos, com Dudu marcando os dois gols do time na partida de volta e a definição vindo nos pênaltis.' },
+      { ano: 2016, categoria: 'titulos', titulo: 'Título com Cuca', desc: 'O clube conquista o Campeonato Brasileiro com o técnico Cuca no comando, já atuando em seu estádio mais recente.' },
+      { ano: 2018, categoria: 'titulos', titulo: 'Novo Brasileiro', desc: 'O time conquista o Campeonato Brasileiro com Luiz Felipe Scolari novamente no comando e Felipe Melo como um dos líderes do elenco.' },
+      { ano: 2020, categoria: 'titulos', titulo: 'Ano de dois títulos', desc: 'Sob o comando de Abel Ferreira, o clube conquista, na mesma temporada, a Copa Libertadores da América e a Copa do Brasil.' },
+      { ano: 2021, categoria: 'titulos', titulo: 'Noite em Montevidéu', desc: 'O Palmeiras vence o Flamengo por 2 a 1, após prorrogação, em uma final disputada em Montevidéu, com gol decisivo de Deyverson.' },
+      { ano: 2022, categoria: 'titulos', titulo: 'Título antecipado', desc: 'O clube garante o título do Campeonato Brasileiro com rodadas de antecedência.' },
+      { ano: 2023, categoria: 'titulos', titulo: 'Mais um Brasileiro', desc: 'O Palmeiras conquista o Campeonato Brasileiro em uma temporada de grande consistência sob o comando de Abel Ferreira.' },
+
+      // ---------- ARTILHEIROS ----------
+      { ano: 1999, categoria: 'artilheiros', titulo: 'Artilheiro inesperado', desc: 'Na campanha da Copa Libertadores daquele ano, o zagueiro Júnior Baiano termina como artilheiro do time, com 5 gols marcados na competição.' },
+      { ano: 2016, categoria: 'artilheiros', titulo: 'Artilheiro da liga', desc: 'O atacante Gabriel Jesus termina a temporada como artilheiro do Campeonato Brasileiro, com 12 gols marcados vestindo a camisa do Palmeiras.' },
+      { ano: 2018, categoria: 'artilheiros', titulo: 'Artilheiro estrangeiro', desc: 'O atacante colombiano Miguel Borja termina como artilheiro do Campeonato Paulista, marcando 7 gols e se tornando um dos poucos estrangeiros a liderar a artilharia do torneio em mais de cem anos de história.' },
+      { ano: 2023, categoria: 'artilheiros', titulo: 'Artilheiro em ascensão', desc: 'Aos 17 anos, o atacante Endrick termina a temporada como artilheiro do clube no Campeonato Brasileiro, com 8 gols em 25 jogos disputados.' },
+
+      // ---------- ESCALAÇÕES ----------
+      { ano: 1999, categoria: 'escalacao', titulo: 'Escalação campeã (ida da final)', desc: 'Nesta partida decisiva, o Palmeiras entrou em campo com: Marcos; Arce, Júnior Baiano, Roque Júnior e Júnior; César Sampaio, Rogério, Alex e Zinho; Paulo Nunes e Oséas, sob o comando de Luiz Felipe Scolari.' },
+      { ano: 2020, categoria: 'escalacao', titulo: 'Escalação campeã (Maracanã)', desc: 'Na decisão contra o Santos, o time foi a campo com: Weverton; Marcos Rocha, Luan, Gustavo Gómez e Matías Viña; Gabriel Menino, Raphael Veiga, Zé Rafael e Danilo; Luiz Adriano e Rony, sob o comando de Abel Ferreira.' },
+      { ano: 2021, categoria: 'escalacao', titulo: 'Escalação campeã (Montevidéu)', desc: 'Na final contra o Flamengo, o Palmeiras escalou: Weverton, Mayke, Gustavo Gómez, Luan e Piquerez; Danilo, Zé Rafael, Gustavo Scarpa e Raphael Veiga; Dudu e Rony, sob o comando de Abel Ferreira.' }
     ];
+
+    const CATEGORIAS = {
+      titulos:     { emoji: '🏆', label: 'Títulos',            desc: 'Campanhas, finais e heróis das conquistas do clube.' },
+      escalacao:   { emoji: '🎽', label: 'Escalações',         desc: 'O time titular usado em partidas históricas.' },
+      artilheiros: { emoji: '⚽', label: 'Artilheiros',         desc: 'Quem mais balançou as redes em cada temporada.' },
+      estadio:     { emoji: '🏟️', label: 'Estádio',            desc: 'Inaugurações, recordes de público e mudanças de nome.' },
+      historico:   { emoji: '📜', label: 'Histórico do Clube', desc: 'Fundação, nome, patrocínios e outros marcos institucionais.' }
+    };
 
     const VIDAS_INICIAIS = 3;
 
+    let categoriasSelecionadas = new Set(Object.keys(CATEGORIAS));
+    let poolAtual = [];
     let linhaDoTempo = [];
     let baralho = [];
     let cartaAtual = null;
@@ -369,8 +561,17 @@
     let aguardando = false;
     let ultimaInsercao = null; // { indice, correta }
 
+    const painelSetup = document.getElementById('painelSetup');
+    const painelJogo = document.getElementById('painelJogo');
+    const listaModos = document.getElementById('listaModos');
+    const btnAlternarTodos = document.getElementById('alternarTodos');
+    const btnComecarJogo = document.getElementById('comecarJogo');
+    const avisoModo = document.getElementById('avisoModo');
+
     const elVidas = document.getElementById('vidas');
     const elProgresso = document.getElementById('progresso');
+    const elModosAtivos = document.getElementById('modosAtivos');
+    const elCartaBadge = document.getElementById('cartaBadge');
     const elCartaTitulo = document.getElementById('cartaTitulo');
     const elCartaDesc = document.getElementById('cartaDesc');
     const elFeedback = document.getElementById('feedback');
@@ -380,7 +581,76 @@
     const elFimTitulo = document.getElementById('fimTitulo');
     const elFimTexto = document.getElementById('fimTexto');
     const btnReiniciar = document.getElementById('reiniciar');
+    const btnMudarModos = document.getElementById('mudarModos');
     const btnJogarNovamente = document.getElementById('jogarNovamente');
+
+    function contarPorCategoria(cat) {
+      return EVENTOS.filter(e => e.categoria === cat).length;
+    }
+
+    function montarListaModos() {
+      listaModos.innerHTML = '';
+      Object.keys(CATEGORIAS).forEach(chave => {
+        const info = CATEGORIAS[chave];
+        const label = document.createElement('label');
+        label.className = 'opcao-modo';
+
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.value = chave;
+        input.checked = categoriasSelecionadas.has(chave);
+        input.addEventListener('change', () => {
+          if (input.checked) categoriasSelecionadas.add(chave);
+          else categoriasSelecionadas.delete(chave);
+          atualizarBotaoAlternar();
+          avisoModo.textContent = '';
+        });
+
+        label.innerHTML = `
+          <span class="emoji-modo">${info.emoji}</span>
+          <span>
+            <strong>${info.label}</strong>
+            <span class="desc-modo">${info.desc}</span>
+          </span>
+          <span class="contador-modo">${contarPorCategoria(chave)} cartas</span>
+        `;
+        label.prepend(input);
+        listaModos.appendChild(label);
+      });
+      atualizarBotaoAlternar();
+    }
+
+    function atualizarBotaoAlternar() {
+      const todasMarcadas = categoriasSelecionadas.size === Object.keys(CATEGORIAS).length;
+      btnAlternarTodos.textContent = todasMarcadas ? 'Desmarcar todos' : 'Marcar todos';
+    }
+
+    btnAlternarTodos.addEventListener('click', () => {
+      const todasMarcadas = categoriasSelecionadas.size === Object.keys(CATEGORIAS).length;
+      categoriasSelecionadas = new Set(todasMarcadas ? [] : Object.keys(CATEGORIAS));
+      montarListaModos();
+    });
+
+    btnComecarJogo.addEventListener('click', () => {
+      if (categoriasSelecionadas.size === 0) {
+        avisoModo.textContent = 'Selecione ao menos um modo para começar.';
+        return;
+      }
+      poolAtual = EVENTOS.filter(e => categoriasSelecionadas.has(e.categoria));
+      if (poolAtual.length < 2) {
+        avisoModo.textContent = 'Esse modo não tem cartas suficientes. Selecione mais opções.';
+        return;
+      }
+      painelSetup.hidden = true;
+      painelJogo.hidden = false;
+      iniciarJogo();
+    });
+
+    btnMudarModos.addEventListener('click', () => {
+      painelJogo.hidden = true;
+      painelSetup.hidden = false;
+      elOverlay.hidden = true;
+    });
 
     function embaralhar(array) {
       const copia = [...array];
@@ -392,7 +662,7 @@
     }
 
     function iniciarJogo() {
-      baralho = embaralhar(EVENTOS);
+      baralho = embaralhar(poolAtual);
       const primeira = baralho.shift();
       linhaDoTempo = [primeira];
       vidas = VIDAS_INICIAIS;
@@ -404,6 +674,12 @@
       elFeedback.textContent = '';
       elFeedback.className = 'feedback';
       elOverlay.hidden = true;
+
+      const nomesModos = [...categoriasSelecionadas].map(c => `${CATEGORIAS[c].emoji} ${CATEGORIAS[c].label}`);
+      elModosAtivos.textContent = categoriasSelecionadas.size === Object.keys(CATEGORIAS).length
+        ? 'Modo: tudo misturado'
+        : `Modo: ${nomesModos.join(', ')}`;
+
       proximaCarta();
       renderizar();
     }
@@ -425,11 +701,11 @@
 
       if (acertou) {
         acertos++;
-        elFeedback.textContent = `✅ Certo! ${cartaAtual.titulo} é de ${cartaAtual.ano}.`;
+        elFeedback.textContent = `✅ Certo! "${cartaAtual.titulo}" é de ${cartaAtual.ano}.`;
         elFeedback.className = 'feedback acerto';
       } else {
         vidas--;
-        elFeedback.textContent = `❌ Não foi dessa vez. ${cartaAtual.titulo} é de ${cartaAtual.ano}.`;
+        elFeedback.textContent = `❌ Não foi dessa vez. "${cartaAtual.titulo}" é de ${cartaAtual.ano}.`;
         elFeedback.className = 'feedback erro';
       }
 
@@ -458,7 +734,7 @@
         }
 
         renderizar();
-      }, 1400);
+      }, 1600);
     }
 
     function finalizarJogo(venceu) {
@@ -477,12 +753,15 @@
         : '';
 
       if (cartaAtual) {
+        elCartaBadge.textContent = `${CATEGORIAS[cartaAtual.categoria].emoji} ${CATEGORIAS[cartaAtual.categoria].label}`;
         elCartaTitulo.textContent = cartaAtual.titulo;
         elCartaDesc.textContent = cartaAtual.desc;
       } else if (aguardando) {
+        elCartaBadge.textContent = '';
         elCartaTitulo.textContent = 'Registrando na linha do tempo...';
         elCartaDesc.textContent = '';
       } else {
+        elCartaBadge.textContent = '';
         elCartaTitulo.textContent = '—';
         elCartaDesc.textContent = '';
       }
@@ -493,6 +772,7 @@
       for (let i = 0; i < totalLacunas; i++) {
         const lacuna = document.createElement('button');
         lacuna.className = 'lacuna';
+        lacuna.type = 'button';
         lacuna.textContent = '⊕';
         lacuna.disabled = !cartaAtual || aguardando;
         lacuna.setAttribute('aria-label', 'Colocar carta aqui');
@@ -506,7 +786,7 @@
           if (ultimaInsercao && ultimaInsercao.indice === i) {
             cartaEl.classList.add(ultimaInsercao.correta ? 'destaque-acerto' : 'destaque-erro');
           }
-          cartaEl.innerHTML = `<div class="ano">${evento.ano}</div><div class="titulo">${evento.titulo}</div>`;
+          cartaEl.innerHTML = `<div class="emoji-cat">${CATEGORIAS[evento.categoria].emoji}</div><div class="ano">${evento.ano}</div><div class="titulo">${evento.titulo}</div>`;
           elLinhaTempo.appendChild(cartaEl);
         }
       }
@@ -515,7 +795,7 @@
     btnReiniciar.addEventListener('click', iniciarJogo);
     btnJogarNovamente.addEventListener('click', iniciarJogo);
 
-    iniciarJogo();
+    montarListaModos();
   </script>
 
 </body>
