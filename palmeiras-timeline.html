@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linha do Tempo do Palmeiras</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(160deg, #04361c, #0a6c34 55%, #0f8f45);
+    color: #1b1b1b;
+    padding: 24px 14px 60px;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    color: #fff;
+    margin-bottom: 20px;
+  }
+
+  header h1 {
+    margin: 0 0 6px;
+    font-size: clamp(1.5rem, 4vw, 2.2rem);
+  }
+
+  header p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.95rem;
+  }
+
+  .painel {
+    background: #fff;
+    border-radius: 18px;
+    padding: 22px 20px 26px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+  }
+
+  .como-jogar {
+    background: #eafbf1;
+    border: 1px solid #bfe9d0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 0.88rem;
+    color: #245a3a;
+    margin-bottom: 18px;
+    line-height: 1.5;
+  }
+
+  .status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .vidas {
+    font-size: 1.3rem;
+    letter-spacing: 4px;
+  }
+
+  .progresso {
+    font-size: 0.9rem;
+    color: #555;
+    font-weight: 600;
+  }
+
+  .carta-atual {
+    background: linear-gradient(135deg, #0f8f45, #0a6c34);
+    color: #fff;
+    border-radius: 16px;
+    padding: 22px;
+    text-align: center;
+    margin-bottom: 26px;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 0.2s ease;
+  }
+
+  .carta-atual .ano-oculto {
+    font-size: 1.6rem;
+    font-weight: bold;
+    opacity: 0.85;
+  }
+
+  .carta-atual h2 {
+    margin: 0;
+    font-size: 1.15rem;
+  }
+
+  .carta-atual p {
+    margin: 0;
+    font-size: 0.92rem;
+    line-height: 1.4;
+    max-width: 480px;
+  }
+
+  .feedback {
+    text-align: center;
+    font-weight: 700;
+    min-height: 24px;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+  }
+
+  .feedback.acerto { color: #0f8f45; }
+  .feedback.erro { color: #c0392b; }
+
+  .linha-tempo-wrap {
+    overflow-x: auto;
+    padding: 10px 4px 18px;
+  }
+
+  .linha-tempo {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: max-content;
+    padding: 4px;
+  }
+
+  .carta-tempo {
+    background: #fff;
+    border: 2px solid #0a6c34;
+    border-radius: 12px;
+    width: 130px;
+    min-width: 130px;
+    padding: 10px 8px;
+    text-align: center;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+  }
+
+  .carta-tempo .ano {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #0a6c34;
+  }
+
+  .carta-tempo .titulo {
+    font-size: 0.78rem;
+    color: #333;
+    margin-top: 4px;
+    line-height: 1.3;
+  }
+
+  .carta-tempo.destaque-acerto {
+    animation: pulseVerde 1.1s ease;
+  }
+
+  .carta-tempo.destaque-erro {
+    animation: pulseVermelho 1.1s ease;
+    border-color: #c0392b;
+  }
+
+  @keyframes pulseVerde {
+    0% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(15,143,69,0.35); }
+    100% { transform: scale(1); box-shadow: 0 3px 8px rgba(0,0,0,0.12); }
+  }
+
+  @keyframes pulseVermelho {
+    0% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(192,57,43,0.35); }
+    100% { transform: scale(1); box-shadow: 0 3px 8px rgba(0,0,0,0.12); }
+  }
+
+  .lacuna {
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 2px dashed #0a6c34;
+    background: #eafbf1;
+    color: #0a6c34;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+
+  .lacuna:hover:not(:disabled) {
+    transform: scale(1.15);
+    background: #0a6c34;
+    color: #fff;
+  }
+
+  .lacuna:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .rodape-controles {
+    display: flex;
+    justify-content: center;
+  }
+
+  #reiniciar {
+    border: none;
+    border-radius: 10px;
+    padding: 10px 22px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: #e0e0e0;
+    color: #333;
+    transition: transform 0.15s ease;
+  }
+
+  #reiniciar:active {
+    transform: scale(0.96);
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 54, 28, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 10;
+  }
+
+  .overlay[hidden] {
+    display: none;
+  }
+
+  .caixa-fim {
+    background: #fff;
+    border-radius: 18px;
+    padding: 30px 26px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 45px rgba(0,0,0,0.35);
+  }
+
+  .caixa-fim h2 {
+    margin: 0 0 10px;
+    font-size: 1.5rem;
+  }
+
+  .caixa-fim.venceu h2 { color: #0a6c34; }
+  .caixa-fim.perdeu h2 { color: #c0392b; }
+
+  .caixa-fim p {
+    color: #444;
+    line-height: 1.5;
+  }
+
+  .caixa-fim button {
+    margin-top: 16px;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 26px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: #0a6c34;
+    color: #fff;
+  }
+
+  @media (max-width: 520px) {
+    .painel { padding: 18px 14px 22px; }
+    .carta-tempo { width: 108px; min-width: 108px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>🌴 Linha do Tempo do Palmeiras</h1>
+      <p>Encaixe os fatos da história do Verdão na ordem cronológica certa!</p>
+    </header>
+
+    <div class="painel">
+      <div class="como-jogar">
+        Cada carta traz um fato da história do clube, sem revelar o ano. Clique no
+        espaço (⊕) da linha do tempo onde você acha que esse fato deve entrar. Acertando,
+        o ano é revelado e a carta fica na linha do tempo. Você tem <strong>3 vidas</strong> —
+        cuidado com os erros!
+      </div>
+
+      <div class="status">
+        <div class="vidas" id="vidas" aria-label="Vidas restantes"></div>
+        <div class="progresso" id="progresso"></div>
+      </div>
+
+      <div class="carta-atual" id="cartaAtual">
+        <div class="ano-oculto">❓</div>
+        <h2 id="cartaTitulo">Carregando...</h2>
+        <p id="cartaDesc"></p>
+      </div>
+
+      <div class="feedback" id="feedback"></div>
+
+      <div class="linha-tempo-wrap">
+        <div class="linha-tempo" id="linhaTempo"></div>
+      </div>
+
+      <div class="rodape-controles">
+        <button id="reiniciar">Reiniciar jogo</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay" hidden>
+    <div class="caixa-fim" id="caixaFim">
+      <h2 id="fimTitulo"></h2>
+      <p id="fimTexto"></p>
+      <button id="jogarNovamente">Jogar novamente</button>
+    </div>
+  </div>
+
+  <script>
+    const EVENTOS = [
+      { ano: 1914, titulo: "Fundação do clube", desc: "Um grupo de imigrantes e descendentes de italianos funda, em São Paulo, o clube que mais tarde se tornaria o Palmeiras: o Palestra Itália." },
+      { ano: 1920, titulo: "Primeiro título paulista", desc: "O time conquista pela primeira vez o Campeonato Paulista, vencendo o Paulistano na decisão." },
+      { ano: 1942, titulo: "Nasce o nome Palmeiras", desc: "Por pressão do governo brasileiro durante a Segunda Guerra Mundial, o clube deixa o nome Palestra Itália e passa a se chamar Sociedade Esportiva Palmeiras." },
+      { ano: 1951, titulo: "Campeão do mundo", desc: "O clube vence a Copa Rio, torneio disputado no Brasil com equipes de vários continentes, celebrado por muitos torcedores como um título mundial." },
+      { ano: 1960, titulo: "Estreia como campeão brasileiro", desc: "O clube conquista pela primeira vez o Campeonato Brasileiro." },
+      { ano: 1967, titulo: "Bicampeão nacional", desc: "O time vence a Taça Brasil, um dos torneios que deram origem ao atual Campeonato Brasileiro." },
+      { ano: 1969, titulo: "Mais um título nacional", desc: "O clube volta a ser campeão brasileiro, mantendo a força de sua geração de craques." },
+      { ano: 1973, titulo: "Título da 'Academia'", desc: "Formado majoritariamente por jogadores da base, o time conhecido como 'Academia de Futebol' conquista o Campeonato Brasileiro." },
+      { ano: 1993, titulo: "Volta ao topo do país", desc: "Depois de quase duas décadas, o clube volta a ser campeão brasileiro, em uma temporada de forte investimento de um patrocinador." },
+      { ano: 1994, titulo: "Bicampeonato seguido", desc: "O Palmeiras conquista o Campeonato Brasileiro pela segunda vez consecutiva, revalidando o título do ano anterior." },
+      { ano: 1998, titulo: "Estreia na Copa do Brasil", desc: "O clube conquista pela primeira vez a Copa do Brasil, vencendo o Cruzeiro na final." },
+      { ano: 1999, titulo: "Primeira Libertadores", desc: "Comandado por Luiz Felipe Scolari, o Palmeiras conquista pela primeira vez a Copa Libertadores da América." },
+      { ano: 2012, titulo: "Segunda Copa do Brasil", desc: "O time volta a levantar a taça da Copa do Brasil, dessa vez sob o comando de Gilson Kleina." },
+      { ano: 2014, titulo: "Casa nova", desc: "É inaugurado o estádio construído no terreno do antigo Palestra Itália, que se torna a nova casa do clube." },
+      { ano: 2015, titulo: "Terceira Copa do Brasil", desc: "O clube conquista mais uma edição da Copa do Brasil, já jogando em sua nova arena." },
+      { ano: 2016, titulo: "Campeão na casa nova", desc: "O Palmeiras é campeão brasileiro pela primeira vez atuando em seu novo estádio." },
+      { ano: 2018, titulo: "Mais um Brasileiro", desc: "O time conquista outro Campeonato Brasileiro, com Luiz Felipe Scolari novamente no comando." },
+      { ano: 2020, titulo: "Ano de dois títulos", desc: "Sob o comando de Abel Ferreira, o clube conquista, na mesma temporada, a Copa Libertadores da América pela segunda vez e também a Copa do Brasil." },
+      { ano: 2021, titulo: "Tricampeão continental", desc: "Em uma decisão direta contra um rival brasileiro, o Palmeiras conquista sua terceira Copa Libertadores da América." },
+      { ano: 2022, titulo: "Título antecipado", desc: "O clube garante o título do Campeonato Brasileiro com rodadas de antecedência." },
+      { ano: 2023, titulo: "Maior campeão nacional", desc: "Com mais um título do Campeonato Brasileiro, o Palmeiras se isola como o clube com mais conquistas na história da competição." },
+      { ano: 2024, titulo: "Estádio ganha novo nome", desc: "Ao fim do contrato com o antigo patrocinador, a arena do clube passa a ter o nome de uma nova empresa parceira." }
+    ];
+
+    const VIDAS_INICIAIS = 3;
+
+    let linhaDoTempo = [];
+    let baralho = [];
+    let cartaAtual = null;
+    let vidas = VIDAS_INICIAIS;
+    let acertos = 0;
+    let totalParaColocar = 0;
+    let numeroCarta = 0;
+    let aguardando = false;
+    let ultimaInsercao = null; // { indice, correta }
+
+    const elVidas = document.getElementById('vidas');
+    const elProgresso = document.getElementById('progresso');
+    const elCartaTitulo = document.getElementById('cartaTitulo');
+    const elCartaDesc = document.getElementById('cartaDesc');
+    const elFeedback = document.getElementById('feedback');
+    const elLinhaTempo = document.getElementById('linhaTempo');
+    const elOverlay = document.getElementById('overlay');
+    const elCaixaFim = document.getElementById('caixaFim');
+    const elFimTitulo = document.getElementById('fimTitulo');
+    const elFimTexto = document.getElementById('fimTexto');
+    const btnReiniciar = document.getElementById('reiniciar');
+    const btnJogarNovamente = document.getElementById('jogarNovamente');
+
+    function embaralhar(array) {
+      const copia = [...array];
+      for (let i = copia.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copia[i], copia[j]] = [copia[j], copia[i]];
+      }
+      return copia;
+    }
+
+    function iniciarJogo() {
+      baralho = embaralhar(EVENTOS);
+      const primeira = baralho.shift();
+      linhaDoTempo = [primeira];
+      vidas = VIDAS_INICIAIS;
+      acertos = 0;
+      totalParaColocar = baralho.length;
+      numeroCarta = 0;
+      aguardando = false;
+      ultimaInsercao = null;
+      elFeedback.textContent = '';
+      elFeedback.className = 'feedback';
+      elOverlay.hidden = true;
+      proximaCarta();
+      renderizar();
+    }
+
+    function proximaCarta() {
+      cartaAtual = baralho.shift() || null;
+      if (cartaAtual) numeroCarta++;
+    }
+
+    function indiceCorreto(ano) {
+      return linhaDoTempo.filter(c => c.ano < ano).length;
+    }
+
+    function escolherPosicao(indiceClicado) {
+      if (!cartaAtual || aguardando) return;
+
+      const correto = indiceCorreto(cartaAtual.ano);
+      const acertou = correto === indiceClicado;
+
+      if (acertou) {
+        acertos++;
+        elFeedback.textContent = `✅ Certo! ${cartaAtual.titulo} é de ${cartaAtual.ano}.`;
+        elFeedback.className = 'feedback acerto';
+      } else {
+        vidas--;
+        elFeedback.textContent = `❌ Não foi dessa vez. ${cartaAtual.titulo} é de ${cartaAtual.ano}.`;
+        elFeedback.className = 'feedback erro';
+      }
+
+      linhaDoTempo.splice(correto, 0, cartaAtual);
+      ultimaInsercao = { indice: correto, correta: acertou };
+      aguardando = true;
+      cartaAtual = null;
+      renderizar();
+
+      setTimeout(() => {
+        aguardando = false;
+        ultimaInsercao = null;
+
+        if (vidas <= 0) {
+          renderizar();
+          finalizarJogo(false);
+          return;
+        }
+
+        proximaCarta();
+
+        if (!cartaAtual) {
+          renderizar();
+          finalizarJogo(true);
+          return;
+        }
+
+        renderizar();
+      }, 1400);
+    }
+
+    function finalizarJogo(venceu) {
+      elCaixaFim.className = 'caixa-fim ' + (venceu ? 'venceu' : 'perdeu');
+      elFimTitulo.textContent = venceu ? '🏆 Você é um verdadeiro Alviverde!' : '💔 Fim de jogo';
+      elFimTexto.textContent = venceu
+        ? `Você completou a linha do tempo inteira com ${acertos} de ${totalParaColocar} acertos e ${vidas} vida(s) de sobra!`
+        : `Suas vidas acabaram. Você acertou ${acertos} de ${totalParaColocar} fatos antes de perder. Tente de novo!`;
+      elOverlay.hidden = false;
+    }
+
+    function renderizar() {
+      elVidas.textContent = '❤️'.repeat(Math.max(vidas, 0)) + '🖤'.repeat(VIDAS_INICIAIS - Math.max(vidas, 0));
+      elProgresso.textContent = totalParaColocar
+        ? `Carta ${Math.min(numeroCarta, totalParaColocar)} de ${totalParaColocar} · Acertos: ${acertos}`
+        : '';
+
+      if (cartaAtual) {
+        elCartaTitulo.textContent = cartaAtual.titulo;
+        elCartaDesc.textContent = cartaAtual.desc;
+      } else if (aguardando) {
+        elCartaTitulo.textContent = 'Registrando na linha do tempo...';
+        elCartaDesc.textContent = '';
+      } else {
+        elCartaTitulo.textContent = '—';
+        elCartaDesc.textContent = '';
+      }
+
+      elLinhaTempo.innerHTML = '';
+
+      const totalLacunas = linhaDoTempo.length + 1;
+      for (let i = 0; i < totalLacunas; i++) {
+        const lacuna = document.createElement('button');
+        lacuna.className = 'lacuna';
+        lacuna.textContent = '⊕';
+        lacuna.disabled = !cartaAtual || aguardando;
+        lacuna.setAttribute('aria-label', 'Colocar carta aqui');
+        lacuna.addEventListener('click', () => escolherPosicao(i));
+        elLinhaTempo.appendChild(lacuna);
+
+        if (i < linhaDoTempo.length) {
+          const evento = linhaDoTempo[i];
+          const cartaEl = document.createElement('div');
+          cartaEl.className = 'carta-tempo';
+          if (ultimaInsercao && ultimaInsercao.indice === i) {
+            cartaEl.classList.add(ultimaInsercao.correta ? 'destaque-acerto' : 'destaque-erro');
+          }
+          cartaEl.innerHTML = `<div class="ano">${evento.ano}</div><div class="titulo">${evento.titulo}</div>`;
+          elLinhaTempo.appendChild(cartaEl);
+        }
+      }
+    }
+
+    btnReiniciar.addEventListener('click', iniciarJogo);
+    btnJogarNovamente.addEventListener('click', iniciarJogo);
+
+    iniciarJogo();
+  </script>
+
+</body>
+</html>
