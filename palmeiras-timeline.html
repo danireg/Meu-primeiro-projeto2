@@ -175,6 +175,33 @@
     margin-top: 6px;
   }
 
+  .recorde-setup {
+    font-size: 0.85rem;
+    color: #245a3a;
+    background: #eafbf1;
+    border: 1px solid #bfe9d0;
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin-top: 4px;
+  }
+
+  .recorde-fim {
+    margin-top: 10px;
+    font-size: 0.88rem;
+    color: #245a3a;
+    background: #eafbf1;
+    border: 1px solid #bfe9d0;
+    border-radius: 10px;
+    padding: 8px 12px;
+  }
+
+  .recorde-fim.novo {
+    color: #7a5b00;
+    background: #fff6da;
+    border-color: #f0d98a;
+    font-weight: 700;
+  }
+
   /* --- Jogo --- */
 
   .status {
@@ -446,6 +473,7 @@
         <button id="comecarJogo" type="button">Começar jogo</button>
       </div>
       <p class="aviso-modo" id="avisoModo"></p>
+      <p class="recorde-setup" id="recordeSetup"></p>
     </div>
 
     <!-- Painel do jogo -->
@@ -487,7 +515,11 @@
     <div class="caixa-fim" id="caixaFim">
       <h2 id="fimTitulo"></h2>
       <p id="fimTexto"></p>
-      <button id="jogarNovamente" type="button">Jogar novamente</button>
+      <p class="recorde-fim" id="recordeFim"></p>
+      <div class="rodape-controles">
+        <button id="jogarNovamente" type="button">Jogar novamente</button>
+        <button id="mudarModosFim" type="button">Mudar modos</button>
+      </div>
     </div>
   </div>
 
@@ -567,6 +599,8 @@
     const btnAlternarTodos = document.getElementById('alternarTodos');
     const btnComecarJogo = document.getElementById('comecarJogo');
     const avisoModo = document.getElementById('avisoModo');
+    const elRecordeSetup = document.getElementById('recordeSetup');
+    const elRecordeFim = document.getElementById('recordeFim');
 
     const elVidas = document.getElementById('vidas');
     const elProgresso = document.getElementById('progresso');
@@ -583,9 +617,67 @@
     const btnReiniciar = document.getElementById('reiniciar');
     const btnMudarModos = document.getElementById('mudarModos');
     const btnJogarNovamente = document.getElementById('jogarNovamente');
+    const btnMudarModosFim = document.getElementById('mudarModosFim');
 
     function contarPorCategoria(cat) {
       return EVENTOS.filter(e => e.categoria === cat).length;
+    }
+
+    // --- High scores (localStorage) ---
+    const CHAVE_RECORDES = 'palmeirasTimelineRecordes';
+
+    function chaveModo(categorias) {
+      return [...categorias].sort().join(',');
+    }
+
+    function carregarRecordes() {
+      try {
+        return JSON.parse(localStorage.getItem(CHAVE_RECORDES)) || {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function salvarRecordes(recordes) {
+      try {
+        localStorage.setItem(CHAVE_RECORDES, JSON.stringify(recordes));
+      } catch (e) {
+        // localStorage indisponível (modo privado, etc.) — segue o jogo sem salvar
+      }
+    }
+
+    function obterRecorde(categorias) {
+      const recordes = carregarRecordes();
+      return recordes[chaveModo(categorias)] || null;
+    }
+
+    function resultadoMelhorQue(novo, atual) {
+      if (!atual) return true;
+      if (novo.acertos !== atual.acertos) return novo.acertos > atual.acertos;
+      return novo.vidas > atual.vidas;
+    }
+
+    function registrarResultado(categorias, resultado) {
+      const recordes = carregarRecordes();
+      const chave = chaveModo(categorias);
+      const atual = recordes[chave] || null;
+      const novoRecorde = resultadoMelhorQue(resultado, atual);
+      if (novoRecorde) {
+        recordes[chave] = resultado;
+        salvarRecordes(recordes);
+      }
+      return { novoRecorde, melhor: novoRecorde ? resultado : atual };
+    }
+
+    function atualizarRecordeSetup() {
+      if (categoriasSelecionadas.size === 0) {
+        elRecordeSetup.textContent = '';
+        return;
+      }
+      const recorde = obterRecorde(categoriasSelecionadas);
+      elRecordeSetup.textContent = recorde
+        ? `🏅 Seu recorde nesse modo: ${recorde.acertos}/${recorde.total} acertos (${recorde.vidas} vida(s) restante(s))`
+        : '🏅 Ainda sem recorde salvo nesse modo. Jogue para começar um!';
     }
 
     function montarListaModos() {
@@ -603,6 +695,7 @@
           if (input.checked) categoriasSelecionadas.add(chave);
           else categoriasSelecionadas.delete(chave);
           atualizarBotaoAlternar();
+          atualizarRecordeSetup();
           avisoModo.textContent = '';
         });
 
@@ -629,6 +722,7 @@
       const todasMarcadas = categoriasSelecionadas.size === Object.keys(CATEGORIAS).length;
       categoriasSelecionadas = new Set(todasMarcadas ? [] : Object.keys(CATEGORIAS));
       montarListaModos();
+      atualizarRecordeSetup();
     });
 
     btnComecarJogo.addEventListener('click', () => {
@@ -646,11 +740,15 @@
       iniciarJogo();
     });
 
-    btnMudarModos.addEventListener('click', () => {
+    function voltarParaSetup() {
       painelJogo.hidden = true;
       painelSetup.hidden = false;
       elOverlay.hidden = true;
-    });
+      atualizarRecordeSetup();
+    }
+
+    btnMudarModos.addEventListener('click', voltarParaSetup);
+    btnMudarModosFim.addEventListener('click', voltarParaSetup);
 
     function embaralhar(array) {
       const copia = [...array];
@@ -743,6 +841,14 @@
       elFimTexto.textContent = venceu
         ? `Você completou a linha do tempo inteira com ${acertos} de ${totalParaColocar} acertos e ${vidas} vida(s) de sobra!`
         : `Suas vidas acabaram. Você acertou ${acertos} de ${totalParaColocar} fatos antes de perder. Tente de novo!`;
+
+      const resultado = { acertos, total: totalParaColocar, vidas, data: Date.now() };
+      const { novoRecorde, melhor } = registrarResultado(categoriasSelecionadas, resultado);
+      elRecordeFim.classList.toggle('novo', novoRecorde);
+      elRecordeFim.textContent = novoRecorde
+        ? `🎉 Novo recorde nesse modo: ${melhor.acertos}/${melhor.total} acertos!`
+        : `🏅 Recorde nesse modo: ${melhor.acertos}/${melhor.total} acertos (${melhor.vidas} vida(s) restante(s))`;
+
       elOverlay.hidden = false;
     }
 
@@ -796,6 +902,7 @@
     btnJogarNovamente.addEventListener('click', iniciarJogo);
 
     montarListaModos();
+    atualizarRecordeSetup();
   </script>
 
 </body>
