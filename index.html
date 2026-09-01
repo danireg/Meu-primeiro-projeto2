@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cronômetro Pomodoro</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+    transition: background 0.5s ease;
+  }
+
+  body.pausa {
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+  }
+
+  .cartao {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 40px 50px;
+    text-align: center;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    width: 320px;
+  }
+
+  h1 {
+    margin: 0 0 5px;
+    font-size: 1.5rem;
+    color: #333;
+  }
+
+  .modo {
+    margin: 0 0 25px;
+    font-size: 1rem;
+    color: #888;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  #tempo {
+    font-size: 4rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 30px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .botoes {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  button {
+    border: none;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+
+  button:active {
+    transform: scale(0.96);
+  }
+
+  #iniciar {
+    background: #43c463;
+    color: #fff;
+  }
+
+  #pausar {
+    background: #f5a623;
+    color: #fff;
+  }
+
+  #reiniciar {
+    background: #e0e0e0;
+    color: #444;
+  }
+
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .ciclos {
+    color: #999;
+    font-size: 0.9rem;
+  }
+</style>
+</head>
+<body>
+
+  <div class="cartao">
+    <h1>🍅 Pomodoro</h1>
+    <p class="modo" id="modo">Foco</p>
+    <div id="tempo">25:00</div>
+    <div class="botoes">
+      <button id="iniciar">Iniciar</button>
+      <button id="pausar" disabled>Pausar</button>
+      <button id="reiniciar">Reiniciar</button>
+    </div>
+    <p class="ciclos">Pomodoros concluídos: <span id="contador">0</span></p>
+  </div>
+
+  <script>
+    const TEMPO_FOCO = 25 * 60;      // 25 minutos
+    const TEMPO_PAUSA = 5 * 60;      // 5 minutos
+
+    let tempoRestante = TEMPO_FOCO;
+    let emFoco = true;
+    let intervalo = null;
+    let contadorPomodoros = 0;
+
+    const elTempo = document.getElementById('tempo');
+    const elModo = document.getElementById('modo');
+    const elContador = document.getElementById('contador');
+    const btnIniciar = document.getElementById('iniciar');
+    const btnPausar = document.getElementById('pausar');
+    const btnReiniciar = document.getElementById('reiniciar');
+
+    function formatarTempo(segundos) {
+      const min = Math.floor(segundos / 60).toString().padStart(2, '0');
+      const seg = (segundos % 60).toString().padStart(2, '0');
+      return `${min}:${seg}`;
+    }
+
+    function atualizarTela() {
+      elTempo.textContent = formatarTempo(tempoRestante);
+      elModo.textContent = emFoco ? 'Foco' : 'Pausa';
+      document.body.classList.toggle('pausa', !emFoco);
+    }
+
+    function iniciar() {
+      if (intervalo) return;
+      btnIniciar.disabled = true;
+      btnPausar.disabled = false;
+
+      intervalo = setInterval(() => {
+        tempoRestante--;
+        atualizarTela();
+
+        if (tempoRestante <= 0) {
+          clearInterval(intervalo);
+          intervalo = null;
+
+          if (emFoco) {
+            contadorPomodoros++;
+            elContador.textContent = contadorPomodoros;
+          }
+
+          emFoco = !emFoco;
+          tempoRestante = emFoco ? TEMPO_FOCO : TEMPO_PAUSA;
+          atualizarTela();
+
+          btnIniciar.disabled = false;
+          btnPausar.disabled = true;
+        }
+      }, 1000);
+    }
+
+    function pausar() {
+      clearInterval(intervalo);
+      intervalo = null;
+      btnIniciar.disabled = false;
+      btnPausar.disabled = true;
+    }
+
+    function reiniciar() {
+      clearInterval(intervalo);
+      intervalo = null;
+      emFoco = true;
+      tempoRestante = TEMPO_FOCO;
+      contadorPomodoros = 0;
+      elContador.textContent = contadorPomodoros;
+      btnIniciar.disabled = false;
+      btnPausar.disabled = true;
+      atualizarTela();
+    }
+
+    btnIniciar.addEventListener('click', iniciar);
+    btnPausar.addEventListener('click', pausar);
+    btnReiniciar.addEventListener('click', reiniciar);
+
+    atualizarTela();
+  </script>
+
+</body>
+</html>
