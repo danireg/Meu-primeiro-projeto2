@@ -1,106 +1,102 @@
 """
-Hello World - Conexão com o SAP (S/4HANA) via API OData
+Hello World - Conectando no SAP do jeito que você faz na mão
 
-Objetivo deste primeiro passo: apenas provar que o programa consegue
-"falar" com o servidor SAP da empresa e receber uma resposta válida.
-Nenhum dado de negócio é lido ainda - isso vem no passo 2
-(veja puxar_dados.py).
+Em vez de usar uma API com usuário técnico (que exigiria pedir algo
+para a TI), este script automatiza o NAVEGADOR: abre a tela do Fiori
+Launchpad e deixa o SSO da empresa autenticar sozinho - exatamente como
+acontece quando você clica em "S/4HANA - PRD (SSO)".
 
-Como funciona:
-- O SAP expõe serviços via "OData" (um jeito padrão de trocar dados
-  por HTTPS, parecido com uma API REST comum).
-- Para autenticar por um programa (fora do navegador), normalmente
-  não se usa o SSO que você usa no Fiori - é preciso um USUÁRIO DE
-  SERVIÇO (technical user) criado pelo time de Basis/TI, com usuário
-  e senha (ou um certificado/OAuth, dependendo de como a empresa
-  configurou).
+IMPORTANTE:
+- Isso só funciona rodando NO SEU COMPUTADOR (não em um servidor
+  qualquer), conectado na rede/VPN da empresa, com o Windows logado no
+  domínio - é isso que faz o SSO acontecer sem pedir senha.
+- Na primeira vez, se aparecer uma tela de login mesmo assim, você loga
+  normalmente na janela que abrir. A sessão fica salva numa pasta local
+  (.perfil_navegador) para as próximas vezes não pedirem login de novo.
 
-O que pedir para o time de TI/Basis antes de rodar este script:
-  1. A URL base do sistema (ex: https://sap-prd.suaempresa.com.br:8443)
-  2. O "mandante" / client SAP (ex: 100)
-  3. Um usuário técnico com senha, autorizado a ler pelo menos um
-     serviço OData (para teste, qualquer serviço padrão já ativado
-     serve, ex: API_BUSINESS_PARTNER)
-  4. Confirmar se é preciso estar na rede da empresa/VPN para acessar
+Pré-requisitos (rodar uma vez, no terminal):
+    pip install -r requirements.txt
+    playwright install chromium
+
+Configuração (arquivo .env, copiado de .env.example):
+    SAP_FIORI_URL = a URL que aparece na barra de endereço do navegador
+    quando você está na tela onde clica em "S/4HANA - PRD (SSO)"
 """
 
 import os
 import sys
+from pathlib import Path
 
-import requests
 from dotenv import load_dotenv
+from playwright.sync_api import sync_playwright
 
 load_dotenv()
 
-SAP_BASE_URL = os.getenv("SAP_BASE_URL", "").rstrip("/")
-SAP_CLIENT = os.getenv("SAP_CLIENT", "")
-SAP_USER = os.getenv("SAP_USER", "")
-SAP_PASSWORD = os.getenv("SAP_PASSWORD", "")
-SAP_VERIFY_SSL = os.getenv("SAP_VERIFY_SSL", "true").lower() != "false"
+FIORI_URL = os.getenv("SAP_FIORI_URL", "")
+NAVEGADOR = os.getenv("SAP_BROWSER_CHANNEL", "msedge")  # "msedge", "chrome" ou vazio p/ Chromium puro
 
-# Serviço usado só para testar a conexão (metadados = "descrição" do
-# serviço, não são dados de negócio). Troque pelo nome do serviço que
-# a TI liberar, se for diferente.
-SERVICO_TESTE = "API_BUSINESS_PARTNER"
+# Pasta onde o navegador guarda cookies/sessão de login. Fica só no seu
+# computador - nunca é enviada para o Git (veja .gitignore).
+PASTA_PERFIL = Path(__file__).parent / ".perfil_navegador"
 
 
-def testar_conexao() -> bool:
-    if not all([SAP_BASE_URL, SAP_USER, SAP_PASSWORD]):
-        print(
-            "Erro: preencha SAP_BASE_URL, SAP_USER e SAP_PASSWORD no "
-            "arquivo .env (veja .env.example)."
-        )
+def abrir_e_logar() -> bool:
+    if not FIORI_URL:
+        print("Erro: preencha SAP_FIORI_URL no arquivo .env (veja .env.example).")
         return False
 
-    url = f"{SAP_BASE_URL}/sap/opu/odata/sap/{SERVICO_TESTE}/$metadata"
-    params = {"sap-client": SAP_CLIENT} if SAP_CLIENT else {}
+    with sync_playwright() as p:
+        print("Abrindo o navegador...")
+        kwargs = {"headless": False}  # precisa aparecer na tela p/ SSO funcionar
+        if NAVEGADOR:
+            kwargs["channel"] = NAVEGADOR
 
-    print(f"Conectando em: {url}")
-    try:
-        resposta = requests.get(
-            url,
-            params=params,
-            auth=(SAP_USER, SAP_PASSWORD),
-            headers={"Accept": "application/xml"},
-            verify=SAP_VERIFY_SSL,
-            timeout=15,
-        )
-    except requests.exceptions.SSLError as erro:
-        print(f"Falha de certificado SSL: {erro}")
+        try:
+            contexto = p.chromium.launch_persistent_context(
+                user_data_dir=str(PASTA_PERFIL), **kwargs
+            )
+        except Exception as erro:
+            print(f"Não consegui abrir o navegador '{NAVEGADOR}': {erro}")
+            print(
+                "Dica: se não tiver o Edge instalado, apague SAP_BROWSER_CHANNEL "
+                "do .env para usar o Chromium que vem com o Playwright."
+            )
+            return False
+
+        pagina = contexto.new_page()
+        print(f"Acessando: {FIORI_URL}")
+        try:
+            pagina.goto(FIORI_URL, wait_until="networkidle", timeout=60000)
+        except Exception as erro:
+            print(f"Não consegui carregar a página: {erro}")
+            print("Verifique se está na rede/VPN da empresa e se a URL está certa.")
+            contexto.close()
+            return False
+
         print(
-            "Se for um certificado interno da empresa, veja a opção "
-            "SAP_VERIFY_SSL no .env.example."
+            "Se aparecer uma tela de login, entre normalmente. Da próxima vez "
+            "a sessão pode já estar salva e isso não será necessário."
         )
-        return False
-    except requests.exceptions.RequestException as erro:
-        print(f"Falha ao conectar no SAP: {erro}")
-        print(
-            "Verifique: a URL está certa? Você está na rede/VPN da "
-            "empresa? O sistema está no ar?"
-        )
-        return False
+        pagina.wait_for_timeout(5000)
 
-    print(f"Status HTTP: {resposta.status_code}")
+        titulo = pagina.title()
+        print(f"Título da página carregada: {titulo!r}")
 
-    if resposta.status_code == 200:
-        print("✅ Conexão com o SAP funcionou! (Hello World alcançado)")
-        return True
-    if resposta.status_code == 401:
-        print("❌ Usuário/senha inválidos (401 Unauthorized).")
-    elif resposta.status_code == 403:
-        print("❌ Acesso negado (403 Forbidden) - falta autorização no SAP.")
-    elif resposta.status_code == 404:
-        print(
-            f"❌ Serviço '{SERVICO_TESTE}' não encontrado (404) - "
-            "confirme o nome do serviço OData com o time de Basis."
-        )
-    else:
-        print("⚠️ Resposta inesperada, veja o conteúdo abaixo:")
-        print(resposta.text[:500])
+        sucesso = "launchpad" in titulo.lower() or "fiori" in titulo.lower()
+        if sucesso:
+            print("✅ Login no SAP Fiori Launchpad funcionou! (Hello World alcançado)")
+        else:
+            print(
+                "⚠️ Não consegui confirmar pelo título da página. Olhe a janela "
+                "que abriu para ver se o login realmente funcionou - se sim, "
+                "está tudo certo, o título pode só ter um nome diferente."
+            )
 
-    return False
+        input("Pressione ENTER aqui no terminal para fechar o navegador...")
+        contexto.close()
+        return sucesso
 
 
 if __name__ == "__main__":
-    ok = testar_conexao()
+    ok = abrir_e_logar()
     sys.exit(0 if ok else 1)

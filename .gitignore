@@ -1,5 +1,9 @@
 # Segredos - nunca subir credenciais reais
 sap/.env
+sap/api_odata/.env
+
+# Sessão salva do navegador (cookies de login) - é sensível, fica só local
+sap/.perfil_navegador/
 
 # Ambiente virtual Python
 sap/.venv/

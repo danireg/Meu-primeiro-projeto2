@@ -1,88 +1,73 @@
 """
-Passo 2 - Puxar uma informação real do SAP
+Passo 2 - Puxar uma informação real, navegando como você navega
 
-Só rode este script depois que conectar_sap.py já tiver funcionado
-(status 200). Aqui vamos pedir uma listinha pequena de dados reais,
-usando o mesmo serviço OData de teste (API_BUSINESS_PARTNER).
+Só rode isto depois que conectar_sap.py já tiver funcionado. Aqui o
+programa abre o Fiori Launchpad e lê o texto de um "tile" (aqueles
+quadradinhos da tela inicial, que às vezes mostram um número/KPI) - é
+o mais parecido com "olhar uma informação na tela", só que feito pelo
+programa em vez de você.
 
-Se o seu usuário técnico não tiver acesso a esse serviço, troque
-SERVICO e ENTIDADE pelo serviço/entidade que a TI/Basis liberar para
-você (cada serviço OData do SAP tem sua própria lista de "entidades",
-que são como se fossem tabelas).
+Troque FILTRO_TILE pelo texto (ou parte dele) do tile/app que você
+quer ler, exatamente como aparece na tela do Launchpad.
 """
 
 import os
 import sys
+from pathlib import Path
 
-import requests
 from dotenv import load_dotenv
+from playwright.sync_api import sync_playwright
 
 load_dotenv()
 
-SAP_BASE_URL = os.getenv("SAP_BASE_URL", "").rstrip("/")
-SAP_CLIENT = os.getenv("SAP_CLIENT", "")
-SAP_USER = os.getenv("SAP_USER", "")
-SAP_PASSWORD = os.getenv("SAP_PASSWORD", "")
-SAP_VERIFY_SSL = os.getenv("SAP_VERIFY_SSL", "true").lower() != "false"
+FIORI_URL = os.getenv("SAP_FIORI_URL", "")
+NAVEGADOR = os.getenv("SAP_BROWSER_CHANNEL", "msedge")
+PASTA_PERFIL = Path(__file__).parent / ".perfil_navegador"
 
-SERVICO = "API_BUSINESS_PARTNER"
-ENTIDADE = "A_BusinessPartner"
-QUANTIDADE = 5  # quantos registros trazer, só para o teste
+FILTRO_TILE = "Pedidos"  # <-- troque pelo texto do tile/app que você quer ler
 
 
-def puxar_dados() -> bool:
-    if not all([SAP_BASE_URL, SAP_USER, SAP_PASSWORD]):
-        print(
-            "Erro: preencha SAP_BASE_URL, SAP_USER e SAP_PASSWORD no "
-            "arquivo .env (veja .env.example)."
+def puxar_info_da_tela() -> bool:
+    if not FIORI_URL:
+        print("Erro: preencha SAP_FIORI_URL no arquivo .env (veja .env.example).")
+        return False
+
+    with sync_playwright() as p:
+        kwargs = {"headless": False}
+        if NAVEGADOR:
+            kwargs["channel"] = NAVEGADOR
+
+        contexto = p.chromium.launch_persistent_context(
+            user_data_dir=str(PASTA_PERFIL), **kwargs
         )
-        return False
+        pagina = contexto.new_page()
 
-    url = f"{SAP_BASE_URL}/sap/opu/odata/sap/{SERVICO}/{ENTIDADE}"
-    params = {
-        "$format": "json",
-        "$top": QUANTIDADE,
-    }
-    if SAP_CLIENT:
-        params["sap-client"] = SAP_CLIENT
+        print(f"Acessando: {FIORI_URL}")
+        pagina.goto(FIORI_URL, wait_until="networkidle", timeout=60000)
+        pagina.wait_for_timeout(5000)
 
-    print(f"Buscando {QUANTIDADE} registro(s) de {ENTIDADE} em {url}")
-    try:
-        resposta = requests.get(
-            url,
-            params=params,
-            auth=(SAP_USER, SAP_PASSWORD),
-            headers={"Accept": "application/json"},
-            verify=SAP_VERIFY_SSL,
-            timeout=15,
-        )
-    except requests.exceptions.RequestException as erro:
-        print(f"Falha ao conectar no SAP: {erro}")
-        return False
+        print(f"Procurando um elemento com o texto: '{FILTRO_TILE}'")
+        elemento = pagina.get_by_text(FILTRO_TILE, exact=False).first
 
-    print(f"Status HTTP: {resposta.status_code}")
+        try:
+            elemento.wait_for(timeout=10000)
+        except Exception:
+            print(
+                f"❌ Não achei nenhum elemento com o texto '{FILTRO_TILE}' na "
+                "tela. Confira o nome exato do tile/app (com maiúsculas/minúsculas "
+                "e acentos certos) e tente de novo."
+            )
+            contexto.close()
+            return False
 
-    if resposta.status_code != 200:
-        print("❌ Não foi possível puxar os dados. Resposta do servidor:")
-        print(resposta.text[:800])
-        return False
+        texto_encontrado = elemento.inner_text()
+        print(f'✅ Encontrei: "{texto_encontrado}"')
 
-    dados = resposta.json().get("d", {}).get("results", [])
-    if not dados:
-        print("Conexão OK, mas nenhum registro foi retornado.")
+        input("Pressione ENTER aqui no terminal para fechar o navegador...")
+        contexto.close()
         return True
-
-    print(f"✅ {len(dados)} registro(s) recebido(s):\n")
-    for item in dados:
-        parceiro = item.get("BusinessPartner", "?")
-        nome = item.get("BusinessPartnerFullName") or item.get(
-            "OrganizationBPName1", ""
-        )
-        print(f"  - Parceiro {parceiro}: {nome}")
-
-    return True
 
 
 if __name__ == "__main__":
-    ok = puxar_dados()
+    ok = puxar_info_da_tela()
     sys.exit(0 if ok else 1)
