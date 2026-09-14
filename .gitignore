@@ -1,0 +1,7 @@
+# Segredos - nunca subir credenciais reais
+sap/.env
+
+# Ambiente virtual Python
+sap/.venv/
+__pycache__/
+*.pyc
